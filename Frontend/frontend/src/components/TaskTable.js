@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { getTasks, deleteTask } from '../api/api';
 import TaskForm from './TaskForm';
 import EditTaskForm from './EditTaskForm';
+import { FaClipboardList, FaFolder, FaPlus, FaEdit, FaTrashAlt, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import './TaskTable.css';
 
 function TaskTable() {
   const [tasks, setTasks] = useState([]);
   const [editingTask, setEditingTask] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [sortKey, setSortKey] = useState('DueDate');
+  const [sortKey, setSortKey] = useState('dueDate');
+  const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
 
   const pageSize = 5;
@@ -37,18 +39,45 @@ function TaskTable() {
   };
 
   const handleSort = (key) => {
+    let direction = 'asc';
+    if (key === sortKey && sortDirection === 'asc') {
+      direction = 'desc';
+    }
     setSortKey(key);
-    const sorted = [...tasks].sort((a, b) => a[key] > b[key] ? 1 : -1);
+    setSortDirection(direction);
+
+    const sorted = [...tasks].sort((a, b) => {
+      const valA = a[key];
+      const valB = b[key];
+
+      if (valA < valB) {
+        return direction === 'asc' ? -1 : 1;
+      }
+      if (valA > valB) {
+        return direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
     setTasks(sorted);
   };
 
   const paginatedTasks = tasks.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const totalPages = Math.ceil(tasks.length / pageSize);
 
+  const renderSortIcon = (columnKey) => {
+    if (sortKey !== columnKey) {
+      return <FaSort />;
+    }
+    if (sortDirection === 'asc') {
+      return <FaSortUp />;
+    }
+    return <FaSortDown />;
+  };
+
   return (
     <div className="task-table-container">
       <div className="header-container">
-        <h1 className="main-title">📋 Task Manager</h1>
+        <h1 className="main-title"><FaClipboardList /> Task Manager</h1>
       </div>
 
       {/* Showing Add Form */}
@@ -63,8 +92,8 @@ function TaskTable() {
       {!showForm && !editingTask && (
         <>
           <div className="sub-header">
-            <h2>🗂️ My Tasks</h2>
-            <button className="add-btn" onClick={() => setShowForm(true)}>➕ Add Task</button>
+            <h2><FaFolder color='#F8D775'/> My Tasks</h2>
+            <button className="add-btn" onClick={() => setShowForm(true)}><FaPlus /> Add Task</button>
           </div>
 
           {tasks.length === 0 ? (
@@ -74,10 +103,10 @@ function TaskTable() {
               <table className="task-table">
                 <thead>
                   <tr>
-                    <th onClick={() => handleSort('title')}>Title ⬍</th>
-                    <th onClick={() => handleSort('description')}>Description ⬍</th>
-                    <th onClick={() => handleSort('dueDate')}>Due Date ⬍</th>
-                    <th onClick={() => handleSort('status')}>Status ⬍</th>
+                    <th onClick={() => handleSort('title')}>Title {renderSortIcon('title')}</th>
+                    <th onClick={() => handleSort('description')}>Description {renderSortIcon('description')}</th>
+                    <th onClick={() => handleSort('dueDate')}>Due Date {renderSortIcon('dueDate')}</th>
+                    <th onClick={() => handleSort('statusId')}>Status {renderSortIcon('statusId')}</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -87,10 +116,10 @@ function TaskTable() {
                       <td>{task.title}</td>
                       <td>{task.description}</td>
                       <td>{new Date(task.dueDate).toLocaleDateString()}</td>
-                      <td>{task.statusId}</td> 
+                      <td>{task.statusId}</td>
                       <td>
-                        <button className="edit-btn" onClick={() => setEditingTask(task)}> ✏️ Edit</button>
-                        <button className="delete-btn" onClick={() => handleDelete(task.taskId)}>Delete</button>
+                        <button className="edit-btn" onClick={() => setEditingTask(task)}> <FaEdit /> Edit</button>
+                        <button className="delete-btn" onClick={() => handleDelete(task.taskId)}><FaTrashAlt /> Delete</button>
                       </td>
                     </tr>
                   ))}
